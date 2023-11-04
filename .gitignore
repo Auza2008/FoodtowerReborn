@@ -1,0 +1,16 @@
+/jars/FoodtowerFoodtower/
+/jars/.cache/
+/jars/crash-reports/
+/jars/libraries/
+/jars/resourcepacks/
+/jars/saves/
+/jars/shaderpacks/
+/jars/ViaMCP/
+/jars/options.txt
+/jars/optionsof.txt
+/jars/optionsshaders.txt
+/jars/server.properties
+/jars/servers.dat
+/out/
+/.idea/
+/Foodtower.iml
