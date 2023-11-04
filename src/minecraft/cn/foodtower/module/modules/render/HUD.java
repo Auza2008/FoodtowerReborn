@@ -60,7 +60,7 @@ public class HUD extends Module {
     public static Option clientCape = new Option("Cape", true);
     public static Mode Widget = new Mode("Widget", widgetE.values(), widgetE.None);
     public static Numbers<Double> r = new Numbers<>("Red", 255.0, 0.0, 255.0, 1.0);
-    public static Numbers<Double> g = new Numbers<>("Green", 0.0, 0.0, 255.0, 1.0);
+    public static Numbers<Double> g = new Numbers<>("Green", 155.0, 0.0, 255.0, 1.0);
     public static Numbers<Double> b = new Numbers<>("Blue", 255.0, 0.0, 255.0, 1.0);
     public static Numbers<Double> a = new Numbers<>("Alpha", 255.0, 0.0, 255.0, 1.0);
     public static Numbers<Double> Arraybackground = new Numbers<>("ArrayAlpha", 0.0, 0.0, 255.0, 1.0);

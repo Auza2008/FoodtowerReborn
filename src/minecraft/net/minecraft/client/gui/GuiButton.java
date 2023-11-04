@@ -1,14 +1,13 @@
 package net.minecraft.client.gui;
 
-import cn.foodtower.Client;
 import cn.foodtower.fastuni.FastUniFontRenderer;
-import cn.foodtower.util.SuperLib;
+import cn.foodtower.fastuni.FontLoader;
 import cn.foodtower.util.anim.AnimationUtil;
 import cn.foodtower.util.render.RenderUtil;
+import cn.foodtower.util.time.TimeHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.audio.SoundHandler;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 
 import java.awt.*;
@@ -25,23 +24,26 @@ public class GuiButton extends Gui {
     public boolean visible;
     protected boolean hovered;
     private double animation;
+    private TimeHelper time = new TimeHelper();
+    private int color;
+    private float opacity;
+    private final FastUniFontRenderer font;
 
     public GuiButton(int buttonId, int x, int y, String buttonText) {
         this(buttonId, x, y, 200, 20, buttonText);
     }
 
     public GuiButton(int buttonId, int x, int y, int widthIn, int heightIn, String buttonText) {
-        this.width = 200;
-        this.height = 20;
+        this.width = widthIn;
+        this.height = heightIn;
         this.enabled = true;
         this.visible = true;
         this.id = buttonId;
         this.xPosition = x;
         this.yPosition = y;
-        this.width = widthIn;
-        this.height = heightIn;
         this.displayString = buttonText;
-        this.animation = 0.10000000149011612D;
+        this.color = new Color(25, 25, 25).getRGB();
+        this.font = FontLoader.msFont15;
     }
 
     protected int getHoverState(boolean mouseOver) {
@@ -57,30 +59,23 @@ public class GuiButton extends Gui {
 
     public void drawButton(Minecraft mc, int mouseX, int mouseY) {
         if (this.visible) {
-            FastUniFontRenderer fr = Client.FontLoaders.Chinese16;
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             this.hovered = mouseX >= this.xPosition && mouseY >= this.yPosition && mouseX < this.xPosition + this.width && mouseY < this.yPosition + this.height;
-            int i = this.getHoverState(this.hovered);
-            GlStateManager.enableBlend();
-            this.animation = AnimationUtil.moveUD(this.animation, (this.hovered ? 0.3F : 0.1F), 10f / Minecraft.getDebugFPS(),4f / Minecraft.getDebugFPS());
-            if (this.enabled) {
-                RenderUtil.drawGradientSideways((float)this.xPosition, (float)(this.yPosition + this.height) - 1.5F, (float)(this.xPosition + this.width), (float)(this.yPosition + this.height), SuperLib.reAlpha(new Color(10, 90, 205).getRGB(), 0.95F),SuperLib.reAlpha(new Color(1, 190, 206).getRGB(),0.95F));
-            }else {
-                //this.displayString = "\247o" + this.displayString;
-                RenderUtil.drawGradientSideways((float)this.xPosition, (float)(this.yPosition + this.height) - 1.5F, (float)(this.xPosition + this.width), (float)(this.yPosition + this.height), SuperLib.reAlpha(new Color(255, 10, 10).getRGB(), 0.95F),SuperLib.reAlpha(new Color(255, 111, 0).getRGB(),0.95F));
-            }
-            RenderUtil.drawRect((float)this.xPosition, (float)this.yPosition, (float)(this.xPosition + this.width), (float)(this.yPosition + this.height) - 1.5F, new Color(0,0,0,180).getRGB());
-            if (this.enabled) {
-                RenderUtil.drawRect((float)this.xPosition, (float)this.yPosition, (float)(this.xPosition + this.width), (float)(this.yPosition + this.height), SuperLib.reAlpha(new Color(225, 225, 225).getRGB(), (float)this.animation));
-            } else {
-                RenderUtil.drawRect((float)this.xPosition, (float)this.yPosition, (float)(this.xPosition + this.width), (float)(this.yPosition + this.height), SuperLib.reAlpha(new Color(255, 255, 255).getRGB(), 0.1F));
+
+            if (!this.hovered) {
+                this.opacity = AnimationUtil.moveUD(opacity,0f,Minecraft.getDebugFPS() / 500f,Minecraft.getDebugFPS() / 400f);
             }
 
-            this.mouseDragged(mc, mouseX, mouseY);
-
-            fr.drawStringWithShadow(this.displayString, (float)this.xPosition + ((float)this.width - fr.getStringWidth(SuperLib.removeColorCode(this.displayString)) + 2.0F) / 2.0F, (float)(this.yPosition + (this.height - 8) / 2) + 1.5f, -1);
+            if (this.hovered) {
+                this.opacity = AnimationUtil.moveUD(opacity,0.3f,Minecraft.getDebugFPS() / 500f,Minecraft.getDebugFPS() / 400f);
+            }
         }
 
+        float radius = (float) this.height / 2.0F;
+        RenderUtil.drawRoundedRect(this.xPosition, (float) this.yPosition, (int) ((this.xPosition + this.width)), (float) this.yPosition + radius * 2.0F, 3f, this.color);
+        RenderUtil.drawFastRoundedRect(this.xPosition, (float) this.yPosition, (int) ((this.xPosition + this.width)), (float) this.yPosition + radius * 2.0F, 3f, new Color(1f,1f,1f,opacity).getRGB());
+        FontLoader.msFont15.drawCenteredString(this.displayString, (float) (this.xPosition + this.width / 2), (float) this.yPosition + (float) (this.height - this.font.FONT_HEIGHT) / 2.0F + 2, new Color(255, 255, 255).getRGB());
+
+        this.mouseDragged(mc, mouseX, mouseY);
     }
 
     protected void mouseDragged(Minecraft mc, int mouseX, int mouseY) {

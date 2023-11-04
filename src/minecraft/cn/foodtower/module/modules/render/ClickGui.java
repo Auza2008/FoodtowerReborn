@@ -11,7 +11,7 @@ import cn.foodtower.util.sound.SoundFxPlayer;
 
 public class ClickGui extends Module {
     public static final Option CustomColor = new Option("CustomColor", false);
-    private static final Mode mode = new Mode("Mode", "mode", ClickGui.modes.values(), modes.Distance);
+    private static final Mode mode = new Mode("Mode", "mode", ClickGui.modes.values(), modes.Exhibition);
 
     public ClickGui() {
         super("ClickGui", new String[]{"clickui"}, ModuleType.Render);

@@ -1,7 +1,7 @@
 package viamcp.gui;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiButton2;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.MathHelper;
 import viamcp.ViaMCP;
@@ -10,7 +10,7 @@ import viamcp.protocols.ProtocolCollection;
 import java.util.Arrays;
 import java.util.Collections;
 
-public class AsyncVersionSlider extends GuiButton
+public class AsyncVersionSlider extends GuiButton2
 {
     private float dragValue = (float) (ProtocolCollection.values().length - Arrays.asList(ProtocolCollection.values()).indexOf(ProtocolCollection.getProtocolCollectionById(ViaMCP.PROTOCOL_VERSION))) / ProtocolCollection.values().length;
 
