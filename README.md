@@ -6,9 +6,6 @@
 ![Alt](https://repobeats.axiom.co/api/embed/e436474b781311fd150c3d2d1170c62e3c2c88e8.svg "Repobeats analytics image")
 
 ## 配置开发环境
-1.首先你要有一个[Gradle](https://gradle.org/)和[Java8[JDK]](https://www.oracle.com/cn/java/technologies/downloads)
-### 已经不需要
-
 1.打开你的idea
 
 2.选择src并导入
