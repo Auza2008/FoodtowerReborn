@@ -25,7 +25,7 @@ import net.minecraft.network.play.client.C03PacketPlayer;
 
 public class Criticals extends Module {
     private static final Numbers<Double> Delay = new Numbers<>("Delay", "Delay", 0.0, 0.0, 1000.0, 1.0);
-    public static Mode mode = new Mode("Mode", "mode", CritMode.values(), CritMode.Motion);
+    public static Mode mode = new Mode("Mode", "mode", CritMode.values(), CritMode.Packet);
     public static Option Always = new Option("Always", "Always", false);
     public static Option C06 = new Option("C06", "C06", false);
     public static Option AutoSet = new Option("AutoSet", "AutoSet", false);
@@ -127,8 +127,11 @@ public class Criticals extends Module {
                         mc.thePlayer.jumpMovementFactor = 0;
                         sendCrit(new double[]{3e-14, 8e-15});
                         break;
+                    case DCJPacket:
+                        sendCrit(new double[]{0.06 + (Math.random() * 0.001), 0.01 + (Math.random() * 0.001)});
+                        break;
                     case DCJ:
-                        mc.thePlayer.motionY = 0.1000000000401781;
+                        mc.thePlayer.motionY = 0.10000000149011612;
                         mc.thePlayer.fallDistance = 0.1f;
                         mc.thePlayer.onGround = false;
                         break;
@@ -159,6 +162,6 @@ public class Criticals extends Module {
     }
 
     public enum CritMode {
-        Packet, NCP, AAC4, DCJ, DCJLowHop, NoGround, Edit, LowHop, Motion
+        Packet, NCP, AAC4, DCJ, DCJPacket, DCJLowHop, NoGround, Edit, LowHop, Motion
     }
 }

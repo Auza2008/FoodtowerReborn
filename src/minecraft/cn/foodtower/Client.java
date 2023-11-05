@@ -3,19 +3,6 @@
  */
 package cn.foodtower;
 
-import java.awt.AWTException;
-import java.awt.CheckboxMenuItem;
-import java.awt.Menu;
-import java.awt.MenuItem;
-import java.awt.PopupMenu;
-import java.awt.SystemTray;
-import java.awt.TrayIcon;
-import java.io.IOException;
-
-import javax.swing.ImageIcon;
-
-import org.lwjgl.opengl.Display;
-
 import cn.foodtower.api.value.Value;
 import cn.foodtower.fastuni.FontLoader;
 import cn.foodtower.manager.CommandManager;
@@ -36,6 +23,11 @@ import cn.foodtower.util.misc.Helper;
 import cn.foodtower.util.misc.liquidbounce.RotationUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.main.Main;
+import org.lwjgl.opengl.Display;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
 
 
 
@@ -54,7 +46,7 @@ public class Client {
 	public static boolean Baned = false;
 	public final static String name = "Foodtower";
 	public final static String version = "5.99";
-	public static String author = "Auza";
+	public static String author = "Auza && neil_huang007";
 	public static String releaseNumber = "Come back";
 	public static String releaseType = Main.isbeta? "Beta":"Release";
 	public static String releaseVersion = releaseType + version + "_" + releaseNumber;
@@ -64,7 +56,7 @@ public class Client {
 	public static boolean isLoaded = false;
 	public static String words;
 	public static String User;
-	public static String userName;
+	public static String userName = "Dev[0001]";
 	public static String Pass;
 	public static String Username;
 

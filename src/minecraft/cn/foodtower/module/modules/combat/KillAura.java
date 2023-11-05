@@ -5,6 +5,7 @@ import cn.foodtower.Client;
 import cn.foodtower.api.EventBus;
 import cn.foodtower.api.EventHandler;
 import cn.foodtower.api.events.Render.EventRender2D;
+import cn.foodtower.api.events.Render.EventRender3D;
 import cn.foodtower.api.events.World.*;
 import cn.foodtower.api.value.Mode;
 import cn.foodtower.api.value.Numbers;
@@ -27,7 +28,6 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.monster.EntitySnowman;
-import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
@@ -37,7 +37,6 @@ import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.network.play.server.S12PacketEntityVelocity;
-import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.MathHelper;
@@ -59,14 +58,15 @@ public class KillAura extends Module {
     public static boolean fakeblockstatus = false;
     // Utils
     public static CopyOnWriteArrayList<EntityLivingBase> targets = new CopyOnWriteArrayList<>();
-    public static CopyOnWriteArrayList<EntityLivingBase> attacked = new CopyOnWriteArrayList<>();
     public static EntityLivingBase curBot = null;
     public static EntityLivingBase currentTarget;
     public static EntityLivingBase target = null;
-    public static EntityLivingBase needHitBot = null;
     public final Option toggleWhenDeadValue = new Option("DisableOnDeath", true);
     private final Mode attackMode = new Mode("AttackTiming", AttackMode.values(), AttackMode.Pre);
     private final Mode blockTiming = new Mode("BlockTiming", BlockTime.values(), BlockTime.Pre);
+    private final Option forceUpdate = new Option("ForceUpdate", false);
+    private final TimeHelper updateTimer = new TimeHelper();
+    private final Option hitable = new Option("AlwaysHitable", false);
     public Mode priority = new Mode("Priority", Prioritymode.values(), Prioritymode.Range);
     public Mode rotMode = new Mode("RotationMode", Rotationmode.values(), Rotationmode.Hypixel);
     public Numbers<Double> hurttime = new Numbers<>("HurtTime", 10.0, 1.0, 10.0, 1.0);
@@ -76,32 +76,24 @@ public class KillAura extends Module {
     public Numbers<Double> cpsMax = new Numbers<>("CPSMax", 10.0, 1.0, 20.0, 1.0);
     public Numbers<Double> cpsMin = new Numbers<>("CPSMin", 8.0, 1.0, 20.0, 1.0);
     public Numbers<Double> switchDelay = new Numbers<>("SwitchDelay", 50d, 0d, 2000d, 10d);
-    public Numbers<Double> yawDiff = new Numbers<>("YawDifference", 15.0, 5.0, 90.0, 1.0);
-    public Option throughblock = new Option("ThroughBlock", true);
+    public Numbers<Double> yawDiff = new Numbers<>("YawDifference", 15.0, 5.0, 180.0, 1.0);
+    public Option throughblock = new Option("ThroughWall", true);
     public Option rotations = new Option("HeadRotations", true);
-    public Option RayCast = new Option("RayCast", true);
+    public Option RayCast = new Option("RayCast", false);
     public Random random = new Random();
-    public boolean needBlock = false;
     public int index;
     // TimeHelper
     public TimeHelper switchTimer = new TimeHelper();
     public TimeHelper attacktimer = new TimeHelper();
-    // תͷ
-    AxisAlignedBB axisAlignedBB;
-    float shouldAddYaw;
-    float[] lastRotation = new float[]{0f, 0f};
     float curY = ScaledResolution.getScaledHeight();
     boolean cantickblock = false;
-    private final Option forceUpdate = new Option("ForceUpdate", false);
-    private final TimeHelper updateTimer = new TimeHelper();
     private float rotationYawHead;
     private float yaw;
     private float pitch;
 
     public KillAura() {
         super("KillAura", new String[]{"ka"}, ModuleType.Combat);
-        addValues(rotMode, priority, blockMode, cpsMax, cpsMin, attackMode, blockTiming, switchDelay, reach, blockReach, hurttime, mistake, yawDiff, switchsize, rotations, RayCast, autoBlock, throughblock, forceUpdate, attackPlayers, attackAnimals, attackMobs, invisible, toggleWhenDeadValue);
-        attacked = new CopyOnWriteArrayList<>();
+        addValues(rotMode, priority, blockMode, cpsMax, cpsMin, attackMode, blockTiming, switchDelay, reach, blockReach, hurttime, mistake, yawDiff, hitable, switchsize, rotations, RayCast, autoBlock, throughblock, forceUpdate, attackPlayers, attackAnimals, attackMobs, invisible, toggleWhenDeadValue);
     }
 
     public static float[] getLoserRotation(Entity target) {
@@ -190,24 +182,21 @@ public class KillAura extends Module {
 
         RayTraceUtil2 rayCastUtil;
         rotationYawHead = mc.thePlayer.rotationYawHead;
-        needHitBot = null;
 
-        if (!targets.isEmpty() && index >= targets.size()) index = 0; // ����Switch����
+        if (!targets.isEmpty() && index >= targets.size()) index = 0;
 
         for (EntityLivingBase ent : targets) {
             if (isValidEntity(ent)) continue;
             targets.remove(ent);
         }
-        // Switch����
 
-        getTarget(event); // ��ʵ��
+        getTarget(event);
 
-        if (targets.size() == 0) { // ʵ������Ϊ0ֹͣ����
+        if (targets.size() == 0) {
             target = null;
         } else {
             try {
-                target = targets.get(index);// ���ù�����Target
-                axisAlignedBB = null;
+                target = targets.get(index);
                 if (mc.thePlayer.getDistanceToEntity(target) > reach.get()) {
                     target = targets.get(0);
                 }
@@ -215,21 +204,23 @@ public class KillAura extends Module {
 
             }
         }
+
         if (ModuleManager.getModuleByName("Scaffold").isEnabled()) {
             target = null;
             return;
         }
+
         if (this.RayCast.get() && target != null && (rayCastUtil = new RayTraceUtil2(target)).getEntity() != target) {
             curBot = rayCastUtil.getEntity();
         }
+
         if (target != null) {
-            // Switch��ʼ
             if (target.hurtTime == 10 && switchTimer.isDelayComplete(switchDelay.get().longValue()) && targets.size() > 1) {
                 switchTimer.reset();
                 ++index;
             }
 
-            if (rotations.get()) { // Ťͷ
+            if (rotations.get()) {
                 switch ((Rotationmode) rotMode.get()) {
                     case Hypixel: {
                         float[] rotation = RotationUtils.getFluxRotations(target, reach.get() + blockReach.get());
@@ -274,8 +265,7 @@ public class KillAura extends Module {
                     doBlock();
                 }
             }
-        } else { // ûʵ��
-            lastRotation[0] = mc.thePlayer.rotationYaw;
+        } else {
             targets.clear();
             if (mc.thePlayer.getHeldItem() != null && mc.thePlayer.getHeldItem().getItem() instanceof ItemSword && autoBlock.get() && (blockingStatus || fakeblockstatus)) {
                 unBlock();
@@ -299,7 +289,7 @@ public class KillAura extends Module {
     }
 
     @EventHandler
-    private void onUpdate(EventMotionUpdate e) {
+    private void onUpdate(EventRender3D e) {
         if (target != null) {
             if (attackMode.get().equals(AttackMode.All)) {
                 doAttack();
@@ -394,10 +384,12 @@ public class KillAura extends Module {
                         random.nextInt(100) < mistake.get().intValue() // ���Mistakes
                 ) miss = true;
 
-                float diff = Math.abs(Math.abs(MathHelper.wrapAngleTo180_float(rotationYawHead)) - Math.abs(MathHelper.wrapAngleTo180_float(RotationUtil.getRotations(target)[0])));
+                if (!hitable.get()) {
+                    float diff = Math.abs(Math.abs(MathHelper.wrapAngleTo180_float(rotationYawHead)) - Math.abs(MathHelper.wrapAngleTo180_float(RotationUtil.getRotations(target)[0])));
 
-                if (diff > yawDiff.get() && !ModuleManager.getModuleByName("Scaffold").isEnabled()) {
-                    miss = true;
+                    if (diff > yawDiff.get() && !ModuleManager.getModuleByName("Scaffold").isEnabled()) {
+                        miss = true;
+                    }
                 }
             }
 
@@ -417,26 +409,9 @@ public class KillAura extends Module {
     private void attack(boolean mistake) {
         currentTarget = ((KillAura.curBot != null) ? KillAura.curBot : KillAura.target);
         if (!mistake) {
-            needBlock = true; // ȷ����
-            CopyOnWriteArrayList<EntityLivingBase> list = new CopyOnWriteArrayList<>();
-            for (Entity entity : mc.theWorld.loadedEntityList) {
-                float diff = Math.abs(Math.abs(MathHelper.wrapAngleTo180_float(rotationYawHead)) - Math.abs(MathHelper.wrapAngleTo180_float(RotationUtil.getRotations(entity)[0])));
-
-                if (entity instanceof EntityZombie && entity.isInvisible() && (diff < yawDiff.get() || mc.thePlayer.getDistanceToEntity(target) < 1) && mc.thePlayer.getDistanceToEntity(entity) < reach.get()) {
-                    list.add((EntityLivingBase) entity);
-                }
-            }
-            if (list.size() == 0) list.add(target);
-            needHitBot = list.get(random.nextInt(list.size()));
-
             EventAttack ej = new EventAttack(currentTarget, true);
             EventBus.getInstance().register(ej);
             AttackOrder.sendFixedAttack(mc.thePlayer, currentTarget);
-
-            if (!attacked.contains(target) && target instanceof EntityPlayer) {
-                attacked.add(target);
-            }
-            needHitBot = null;
             curBot = null;
         } else {
             mc.thePlayer.swingItem();
@@ -495,8 +470,6 @@ public class KillAura extends Module {
                 if (entity != mc.thePlayer && !mc.thePlayer.isDead && !(entity instanceof EntityArmorStand || entity instanceof EntitySnowman)) {
 
                     if (entity instanceof EntityPlayer && attackPlayers.get()) {
-                        if (entity.ticksExisted < 30) return false;
-
                         if (!mc.thePlayer.canEntityBeSeen(entity) && !throughblock.get()) return false;
 
                         if (entity.isInvisible() && !invisible.get()) return false;
@@ -521,25 +494,14 @@ public class KillAura extends Module {
     public void onEnable() {
         cantickblock = false;
         curY = ScaledResolution.getScaledHeight();
-        shouldAddYaw = 0;
-        attacked = new CopyOnWriteArrayList<>();
-        axisAlignedBB = null;
         index = 0; // Switch Targetָ��
         super.onEnable();
     }
 
     @Override
     public void onDisable() {
-//        if(mc.thePlayer.isBlocking() && (Boolean) autoBlock.get() && blockMode.get().equals(BlockMode.Legit)) {
-//            this.stopBlocking();
-//        }
         cantickblock = false;
         curY = ScaledResolution.getScaledHeight();
-        axisAlignedBB = null;
-        if (mc.thePlayer != null) {
-            lastRotation[0] = mc.thePlayer.rotationYaw;
-        }
-
         targets.clear();
         target = null;
         currentTarget = null;

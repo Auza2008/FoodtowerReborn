@@ -1,13 +1,8 @@
 package cn.foodtower.ui;
 
 
-import java.awt.Color;
-import java.io.IOException;
-
+import cn.core.auth.TextField;
 import cn.core.auth.*;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.GL11;
-
 import cn.foodtower.Client;
 import cn.foodtower.ui.buttons.UIFlatButton;
 import cn.foodtower.ui.font.FontLoaders;
@@ -23,6 +18,11 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.GL11;
+
+import java.awt.*;
+import java.io.IOException;
 
 
 public class GuiLogin extends GuiScreen {
@@ -46,7 +46,7 @@ public class GuiLogin extends GuiScreen {
 					if (!username.getText().isEmpty() && !password.getText().isEmpty()) {
 						if(Auth.getInstance( ).loginAccount( username.getText( ),password.getText(), HWIDUtils.getHWID()) ){
 							String usernames = "[" + Client.name + "]" + username.getText();
-							Client.userName = username.getText();
+//							Client.userName = username.getText();
 							String passwords = password.getText();
 							Logging = true;
 //						new Thread(() -> IRC.Verify(usernames, passwords)).start();
