@@ -16,4 +16,4 @@
 ## 贡献列表
 ### <3.0版本: Auza
 ### <5.1版本: 小曹 LittleGod Auza
-### Now:Auza
+### Now:Auza, Star·Ring
