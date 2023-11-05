@@ -77,6 +77,7 @@ public class KillAura extends Module {
     public Numbers<Double> cpsMin = new Numbers<>("CPSMin", 8.0, 1.0, 20.0, 1.0);
     public Numbers<Double> switchDelay = new Numbers<>("SwitchDelay", 50d, 0d, 2000d, 10d);
     public Numbers<Double> yawDiff = new Numbers<>("YawDifference", 15.0, 5.0, 180.0, 1.0);
+    private Numbers<Double> amount = new Numbers<>("HypixelShakeAmout", 4.0, 0.0, 10.0, 0.5);
     public Option throughblock = new Option("ThroughWall", true);
     public Option rotations = new Option("HeadRotations", true);
     public Option RayCast = new Option("RayCast", false);
@@ -93,7 +94,8 @@ public class KillAura extends Module {
 
     public KillAura() {
         super("KillAura", new String[]{"ka"}, ModuleType.Combat);
-        addValues(rotMode, priority, blockMode, cpsMax, cpsMin, attackMode, blockTiming, switchDelay, reach, blockReach, hurttime, mistake, yawDiff, hitable, switchsize, rotations, RayCast, autoBlock, throughblock, forceUpdate, attackPlayers, attackAnimals, attackMobs, invisible, toggleWhenDeadValue);
+        addValues(rotMode, amount, priority, blockMode, cpsMax, cpsMin, attackMode, blockTiming, switchDelay, reach, blockReach, hurttime, mistake, yawDiff, hitable, switchsize, rotations, RayCast, autoBlock, throughblock, forceUpdate, attackPlayers, attackAnimals, attackMobs, invisible, toggleWhenDeadValue);
+        setValueDisplayable(amount, rotMode, Rotationmode.Hypixel2);
     }
 
     public static float[] getLoserRotation(Entity target) {
@@ -221,31 +223,33 @@ public class KillAura extends Module {
             }
 
             if (rotations.get()) {
+                float[] rotation = getRotations(target);
                 switch ((Rotationmode) rotMode.get()) {
-                    case Hypixel: {
-                        float[] rotation = RotationUtils.getFluxRotations(target, reach.get() + blockReach.get());
+                    case Hypixel:
+                        rotation = RotationUtils.getFluxRotations(target, reach.get() + blockReach.get());
                         event.setYaw(rotation[0]);
                         event.setPitch(rotation[1]);
                         rotationYawHead = event.getYaw();
                         Client.RenderRotate(rotation[0], rotation[1]);
                         break;
-                    }
-                    case Viro: {
-                        float[] rotations = getRotations(target);
-                        event.setYaw(rotations[0]);
-                        event.setPitch(rotations[1]);
-                        rotationYawHead = event.getYaw();
-                        Client.RenderRotate(rotations[0], rotations[1]);
+                    case Hypixel2:
+                        rotation[0] = (float) (RotationUtils.getAngles(target)[0] + Math.random() * amount.get() - amount.get() / 2);
+                        rotation[1] = (float) (RotationUtils.getAngles(target)[1] + Math.random() * amount.get() - amount.get() / 2);
                         break;
-                    }
-                    case FootClick: {
-                        float[] rotations = getLoserRotation(target);
-                        event.setYaw(rotations[0]);
-                        event.setPitch(rotations[1]);
+                    case Viro:
+                        rotation = getRotations(target);
+                        event.setYaw(rotation[0]);
+                        event.setPitch(rotation[1]);
                         rotationYawHead = event.getYaw();
-                        Client.RenderRotate(rotations[0], rotations[1]);
+                        Client.RenderRotate(rotation[0], rotation[1]);
                         break;
-                    }
+                    case FootClick:
+                        rotation = getLoserRotation(target);
+                        event.setYaw(rotation[0]);
+                        event.setPitch(rotation[1]);
+                        rotationYawHead = event.getYaw();
+                        Client.RenderRotate(rotation[0], rotation[1]);
+                        break;
                 }
             }
 
@@ -518,7 +522,7 @@ public class KillAura extends Module {
     }
 
     enum Rotationmode {
-        Hypixel, Viro, FootClick
+        Hypixel, Hypixel2, Viro, FootClick
     }
 
     enum Prioritymode {

@@ -50,6 +50,14 @@ public class Velocity extends Module {
     @EventHandler
     public void onEvent(EventPreUpdate event) {
         switch ((modes) mode.getValue()) {
+            case Safe:
+                if (mc.thePlayer.hurtTime > 0) {
+                    mc.thePlayer.motionX += -1.0E-7;
+                    mc.thePlayer.motionY += -1.0E-7;
+                    mc.thePlayer.motionZ += -1.0E-7;
+                    mc.thePlayer.isAirBorne = true;
+                }
+                break;
             case Tick:
                 if (velocitytick > velocitytickvalue.get()) {
                     if (mc.thePlayer.motionY > 0) mc.thePlayer.motionY = 0.0;
@@ -223,7 +231,7 @@ public class Velocity extends Module {
     }
 
     enum modes {
-        Simple, Tick, Reverse, AAC, OldAAC, AAC520, AAC5Reduce, AAC5Combat
+        Simple, Safe, Tick, Reverse, AAC, OldAAC, AAC520, AAC5Reduce, AAC5Combat
     }
 
 }

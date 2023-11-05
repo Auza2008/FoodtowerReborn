@@ -127,6 +127,9 @@ public class Criticals extends Module {
                         mc.thePlayer.jumpMovementFactor = 0;
                         sendCrit(new double[]{3e-14, 8e-15});
                         break;
+                    case BlocksMC:
+                        sendCrit(new double[]{0.001091981, 0.000114514, 0});
+                        break;
                     case DCJPacket:
                         sendCrit(new double[]{0.06 + (Math.random() * 0.001), 0.01 + (Math.random() * 0.001)});
                         break;
@@ -162,6 +165,6 @@ public class Criticals extends Module {
     }
 
     public enum CritMode {
-        Packet, NCP, AAC4, DCJ, DCJPacket, DCJLowHop, NoGround, Edit, LowHop, Motion
+        Packet, NCP, AAC4, BlocksMC, DCJ, DCJPacket, DCJLowHop, NoGround, Edit, LowHop, Motion
     }
 }
