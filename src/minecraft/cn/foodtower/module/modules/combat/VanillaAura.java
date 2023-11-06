@@ -5,13 +5,14 @@ import cn.foodtower.api.EventBus;
 import cn.foodtower.api.EventHandler;
 import cn.foodtower.api.events.Render.EventRender3D;
 import cn.foodtower.api.events.World.EventAttack;
+import cn.foodtower.api.events.World.EventMotionUpdate;
 import cn.foodtower.api.events.World.EventPacket;
-import cn.foodtower.api.events.World.EventPreUpdate;
 import cn.foodtower.api.events.World.EventWorldChanged;
 import cn.foodtower.api.value.Mode;
 import cn.foodtower.api.value.Numbers;
 import cn.foodtower.api.value.Option;
 import cn.foodtower.manager.FriendManager;
+import cn.foodtower.manager.ModuleManager;
 import cn.foodtower.module.Module;
 import cn.foodtower.module.ModuleType;
 import cn.foodtower.module.modules.world.Teams;
@@ -29,6 +30,7 @@ import net.minecraft.entity.monster.EntitySnowman;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
@@ -56,11 +58,12 @@ public class VanillaAura extends Module {
     public Option attackMobs = new Option("Mobs", false);
     public Option invisible = new Option("Invisibles", false);
     public TimeHelper attacktimer = new TimeHelper();
-    private Option smart = new Option("SmartMode", false);
+    private Option smart = new Option("SmartMode", true);
+    private Option breaker = new Option("ArmorBreaker", false);
 
     public VanillaAura() {
         super("VanillaAura", new String[]{"vaura", "hvhaura", "haura"}, ModuleType.Combat);
-        addValues(maxCPS, minCPS, range, blockRange, autoblock, blockMode, rotation, smart, attackPlayers, attackAnimals, attackMobs, invisible, esp);
+        addValues(maxCPS, minCPS, range, blockRange, autoblock, blockMode, rotation, smart, breaker, attackPlayers, attackAnimals, attackMobs, invisible, esp);
     }
 
     @Override
@@ -123,7 +126,7 @@ public class VanillaAura extends Module {
     }
 
     @EventHandler
-    private void onPre(EventPreUpdate e) {
+    private void onUpdate(EventMotionUpdate e) {
         for (EntityLivingBase ent : targets) {
             if (isValidEntity(ent)) continue;
             targets.remove(ent);
@@ -151,6 +154,11 @@ public class VanillaAura extends Module {
             e.setYaw(rotation[0]);
             e.setPitch(rotation[1]);
             Client.RenderRotate(rotation[0], rotation[1]);
+        }
+
+        if (ModuleManager.getModuleByClass(AutoHead.class).isEnabled() && breaker.get()) {
+            Notifications.getManager().post("VanillaAura", "ArmorBreaker与AutoHead不兼容!");
+            ModuleManager.getModuleByClass(AutoHead.class).setEnabled(false);
         }
     }
 
@@ -197,6 +205,9 @@ public class VanillaAura extends Module {
         EventBus.getInstance().register(ej);
         mc.thePlayer.swingItem();
         sendPacket(new C02PacketUseEntity(target, C02PacketUseEntity.Action.ATTACK));
+        if (breaker.get()) {
+            breaker();
+        }
     }
 
     private void getTargets() {
@@ -245,6 +256,19 @@ public class VanillaAura extends Module {
         if (AntiBot.isServerBot(e)) {
             return true;
         } else return AntiBot.isServerBot(e);
+    }
+
+    public void breaker() {
+        if (!mc.thePlayer.onGround) {
+            return;
+        }
+        ItemStack current = mc.thePlayer.getHeldItem();
+        for (int i = 0; i < 45; i++) {
+            ItemStack toSwitch = mc.thePlayer.inventoryContainer.getSlot(i).getStack();
+            if ((current != null) && (toSwitch != null) && ((toSwitch.getItem() instanceof ItemSword))) {
+                mc.playerController.windowClick(0, i, mc.thePlayer.inventory.currentItem, 2, mc.thePlayer);
+            }
+        }
     }
 
     enum BlockMode {
