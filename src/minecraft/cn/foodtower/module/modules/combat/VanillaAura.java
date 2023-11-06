@@ -43,8 +43,8 @@ public class VanillaAura extends Module {
     public static boolean blockingStatus = false;
     public static EntityLivingBase target = null;
     private final Option rotation = new Option("Rotation", true);
-    private final Numbers<Double> maxCPS = new Numbers<>("CPSMax", 30.0, 1.0, 20.0, 1.0);
-    private final Numbers<Double> minCPS = new Numbers<>("CPSMin", 30.0, 1.0, 20.0, 1.0);
+    private final Numbers<Double> maxCPS = new Numbers<>("CPSMax", 20.0, 1.0, 30.0, 1.0);
+    private final Numbers<Double> minCPS = new Numbers<>("CPSMin", 20.0, 1.0, 30.0, 1.0);
     private final Numbers<Double> range = new Numbers<>("Range", 10.0, 1.0, 10.0, 1.0);
     private final Numbers<Double> blockRange = new Numbers<>("BlockRange", 5.0, 1.0, 5.0, 1.0);
     private final Option autoblock = new Option("AutoBlock", true);
