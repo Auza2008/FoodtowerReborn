@@ -3,8 +3,6 @@ package cn.foodtower.module.modules.combat;
 
 import cn.foodtower.api.EventHandler;
 import cn.foodtower.api.events.World.EventAttack;
-import cn.foodtower.api.events.World.EventMotionUpdate;
-import cn.foodtower.api.events.World.EventMove;
 import cn.foodtower.api.events.World.EventPacketSend;
 import cn.foodtower.api.value.Mode;
 import cn.foodtower.api.value.Numbers;
@@ -54,8 +52,8 @@ public class Criticals extends Module {
         }
     }
 
-    private boolean canCrit(EventMotionUpdate event, Entity e) {
-        return (!ModuleManager.getModuleByClass(Scaffold.class).isEnabled() && (AutoSet.getValue() ? e.hurtResistantTime <= MathUtil.randomNumber(20, 12) : e.hurtResistantTime <= HurtTime.getValue()) && (event.isOnGround() || MoveUtils.isOnGround(0.001)) && !ModuleManager.getModuleByClass(Speed.class).isEnabled() && !ModuleManager.getModuleByClass(Fly.class).isEnabled()) || Always.getValue();
+    private boolean canCrit(Entity e) {
+        return (!ModuleManager.getModuleByClass(Scaffold.class).isEnabled() && (AutoSet.getValue() ? e.hurtResistantTime <= MathUtil.randomNumber(20, 12) : e.hurtResistantTime <= HurtTime.getValue()) && (mc.thePlayer.onGround || MoveUtils.isOnGround(0.001)) && !ModuleManager.getModuleByClass(Speed.class).isEnabled() && !ModuleManager.getModuleByClass(Fly.class).isEnabled()) || Always.getValue();
     }
 
     @EventHandler
@@ -83,32 +81,23 @@ public class Criticals extends Module {
 
     @Override
     public void onEnable() {
+        attacks = 0;
         if (mode.getValue().equals(CritMode.NoGround)) {
             mc.thePlayer.jump();
         }
     }
 
     @EventHandler
-    private void onAttack(EventAttack e10) {
-        if (e10.isPreAttack()) {
-            ++attacks;
-        }
-    }
-
-    @EventHandler
-    public void onMotion(EventMove e) {
-    }
-
-    @EventHandler
-    private void onUpdate(EventMotionUpdate e) {
+    private void onAttack(EventAttack e) {
         setSuffix(mode.getValue());
 
-        if (KillAura.currentTarget == null || KillAura.target == null) return;
+        if (e.getEntity() == null || e.isPostAttack()) return;
 
-        if (canCrit(e, KillAura.currentTarget)) {
+        if (canCrit(e.getEntity())) {
             if (this.timer.hasReached(AutoSet.getValue() ? MathUtil.randomNumber(375, 50) : Delay.getValue())) {
                 this.timer.reset();
-                mc.thePlayer.onCriticalHit(KillAura.currentTarget);
+                ++attacks;
+                mc.thePlayer.onCriticalHit(e.getEntity());
                 switch ((CritMode) mode.getValue()) {
                     case Packet:
                         sendCrit(new double[]{0.03, 0.00, 0.06, 0.00});

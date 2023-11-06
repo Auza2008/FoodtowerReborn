@@ -12,19 +12,24 @@ public class FontManager {
     public FastUniFontRenderer Chinese15 = FontLoader.msFont15;
     public FastUniFontRenderer Chinese18 = FontLoader.msFont18;
     public FastUniFontRenderer Chinese20 = FontLoader.msFont20;
+    public FastUniFontRenderer Chinese32 = FontLoader.msFont32;
     public FastUniFontRenderer Chinese35 = FontLoader.msFont35;
     public FastUniFontRenderer CSGO46 = FontLoader.CSGO46;
     public FastUniFontRenderer CSGO40 = FontLoader.CSGO40;
     public FastUniFontRenderer CSGO36 = FontLoader.CSGO36;
 
 
-    public FastUniFontRenderer GoogleSans16 = FontLoader.getFont(16, "GoogleSans.ttf",42);
-    public FastUniFontRenderer GoogleSans18 = FontLoader.getFont(18, "GoogleSans.ttf",44);
+    public FastUniFontRenderer GoogleSans16 = FontLoader.getFont(16, "GoogleSans.ttf", 42);
+    public FastUniFontRenderer GoogleSans18 = FontLoader.getFont(18, "GoogleSans.ttf", 44);
     public FastUniFontRenderer GoogleSans20 = FontLoader.getFont(20, "GoogleSans.ttf");
-    public FastUniFontRenderer GoogleSans35 = FontLoader.getFont(35, "GoogleSans.ttf",46);
-    public FastUniFontRenderer Arial18 = FontLoader.getFont(18, "Arial.ttf",48);
+    public FastUniFontRenderer GoogleSans22 = FontLoader.getFont(22, "GoogleSans.ttf");
+    public FastUniFontRenderer GoogleSans24 = FontLoader.getFont(24, "GoogleSans.ttf");
+    public FastUniFontRenderer GoogleSans35 = FontLoader.getFont(35, "GoogleSans.ttf", 46);
+    public FastUniFontRenderer Arial18 = FontLoader.getFont(18, "Arial.ttf", 48);
+    public FastUniFontRenderer NovIcon28 = FontLoader.getFont(28, "NovICON.ttf");
+    public FastUniFontRenderer NovoIcon25 = FontLoader.getFont(25, "NovoICON.ttf");
 
-    public FastUniFontRenderer KomikaTitleBold50 = FontLoader.getFont(50, "KomikaTitleBold.ttf",50);
+    public FastUniFontRenderer KomikaTitleBold50 = FontLoader.getFont(50, "KomikaTitleBold.ttf", 50);
 
 
     public FontManager() {

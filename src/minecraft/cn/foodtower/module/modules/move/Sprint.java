@@ -5,6 +5,7 @@ import cn.foodtower.api.events.World.EventPreUpdate;
 import cn.foodtower.api.value.Option;
 import cn.foodtower.module.Module;
 import cn.foodtower.module.ModuleType;
+import cn.foodtower.module.modules.combat.KillAura;
 import cn.foodtower.util.entity.MovementUtils;
 import cn.foodtower.util.math.Rotation;
 import cn.foodtower.util.math.RotationUtil;
@@ -27,15 +28,11 @@ public class Sprint extends Module {
 
     @EventHandler
     private void onUpdate(EventPreUpdate event) {
-        if (!MovementUtils.isMoving() || mc.thePlayer.isSneaking() ||
-                (blindnessValue.getValue() && mc.thePlayer.isPotionActive(Potion.blindness)) ||
-                (foodValue.getValue() && !(mc.thePlayer.getFoodStats().getFoodLevel() > 6.0F || mc.thePlayer.capabilities.allowFlying))
-                || (checkServerSide.getValue() && (mc.thePlayer.onGround || !checkServerSideGround.getValue())
-                && !allDirectionsValue.getValue() && RotationUtil.targetRotation != null &&
-                RotationUtil.getRotationDifference(new Rotation(mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch)) > 30)) {
+        if (!MovementUtils.isMoving() || (KillAura.currentTarget != null && !KillAura.keepSprint.get()) || mc.thePlayer.isSneaking() || (blindnessValue.getValue() && mc.thePlayer.isPotionActive(Potion.blindness)) || (foodValue.getValue() && !(mc.thePlayer.getFoodStats().getFoodLevel() > 6.0F || mc.thePlayer.capabilities.allowFlying)) || (checkServerSide.getValue() && (mc.thePlayer.onGround || !checkServerSideGround.getValue()) && !allDirectionsValue.getValue() && RotationUtil.targetRotation != null && RotationUtil.getRotationDifference(new Rotation(mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch)) > 30)) {
             mc.thePlayer.setSprinting(false);
             return;
         }
+
         if (allDirectionsValue.getValue() || mc.thePlayer.movementInput.moveForward >= 0.8F)
             mc.thePlayer.setSprinting(true);
     }

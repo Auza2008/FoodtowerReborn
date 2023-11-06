@@ -18,10 +18,12 @@ import cn.foodtower.module.modules.world.Teams;
 import cn.foodtower.ui.notifications.user.Notifications;
 import cn.foodtower.util.RayTraceUtil2;
 import cn.foodtower.util.math.RotationUtil;
+import cn.foodtower.util.render.RenderUtil;
 import cn.foodtower.util.rotations.RotationUtils;
 import cn.foodtower.util.time.TimeHelper;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -33,6 +35,7 @@ import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
+import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
@@ -40,6 +43,8 @@ import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.MathHelper;
+import viamcp.ViaMCP;
+import viamcp.protocols.ProtocolCollection;
 import viamcp.utils.AttackOrder;
 
 import java.util.Comparator;
@@ -61,12 +66,15 @@ public class KillAura extends Module {
     public static EntityLivingBase curBot = null;
     public static EntityLivingBase currentTarget;
     public static EntityLivingBase target = null;
+    public static Option keepSprint = new Option("KeepSprint", true);
     public final Option toggleWhenDeadValue = new Option("DisableOnDeath", true);
     private final Mode attackMode = new Mode("AttackTiming", AttackMode.values(), AttackMode.Pre);
     private final Mode blockTiming = new Mode("BlockTiming", BlockTime.values(), BlockTime.Pre);
     private final Option forceUpdate = new Option("ForceUpdate", false);
     private final TimeHelper updateTimer = new TimeHelper();
     private final Option hitable = new Option("AlwaysHitable", false);
+    private final Numbers<Double> amount = new Numbers<>("HypixelShakeAmout", 4.0, 0.0, 10.0, 0.5);
+    private final Option esp = new Option("ESP", true);
     public Mode priority = new Mode("Priority", Prioritymode.values(), Prioritymode.Range);
     public Mode rotMode = new Mode("RotationMode", Rotationmode.values(), Rotationmode.Hypixel);
     public Numbers<Double> hurttime = new Numbers<>("HurtTime", 10.0, 1.0, 10.0, 1.0);
@@ -77,7 +85,6 @@ public class KillAura extends Module {
     public Numbers<Double> cpsMin = new Numbers<>("CPSMin", 8.0, 1.0, 20.0, 1.0);
     public Numbers<Double> switchDelay = new Numbers<>("SwitchDelay", 50d, 0d, 2000d, 10d);
     public Numbers<Double> yawDiff = new Numbers<>("YawDifference", 15.0, 5.0, 180.0, 1.0);
-    private Numbers<Double> amount = new Numbers<>("HypixelShakeAmout", 4.0, 0.0, 10.0, 0.5);
     public Option throughblock = new Option("ThroughWall", true);
     public Option rotations = new Option("HeadRotations", true);
     public Option RayCast = new Option("RayCast", false);
@@ -94,7 +101,7 @@ public class KillAura extends Module {
 
     public KillAura() {
         super("KillAura", new String[]{"ka"}, ModuleType.Combat);
-        addValues(rotMode, amount, priority, blockMode, cpsMax, cpsMin, attackMode, blockTiming, switchDelay, reach, blockReach, hurttime, mistake, yawDiff, hitable, switchsize, rotations, RayCast, autoBlock, throughblock, forceUpdate, attackPlayers, attackAnimals, attackMobs, invisible, toggleWhenDeadValue);
+        addValues(rotMode, amount, priority, blockMode, cpsMax, cpsMin, attackMode, blockTiming, switchDelay, reach, blockReach, hurttime, mistake, yawDiff, hitable, switchsize, rotations, RayCast, autoBlock, throughblock, keepSprint, forceUpdate, attackPlayers, attackAnimals, attackMobs, invisible, esp, toggleWhenDeadValue);
         setValueDisplayable(amount, rotMode, Rotationmode.Hypixel2);
     }
 
@@ -151,30 +158,30 @@ public class KillAura extends Module {
         return blockingStatus;
     }
 
-//    @EventHandler
-//    public void onRender(EventRender3D render) { // Copy
-//        if (target == null || !esp.get()) {
-//            return;
-//        }
-//
-//        if (KillAura.currentTarget == null) return;
-//        double x = KillAura.currentTarget.lastTickPosX + (KillAura.currentTarget.posX - KillAura.currentTarget.lastTickPosX) * (double) render.getPartialTicks() - RenderManager.renderPosX;
-//        double y = KillAura.currentTarget.lastTickPosY + (KillAura.currentTarget.posY - KillAura.currentTarget.lastTickPosY) * (double) render.getPartialTicks() - RenderManager.renderPosY;
-//        double z = KillAura.currentTarget.lastTickPosZ + (KillAura.currentTarget.posZ - KillAura.currentTarget.lastTickPosZ) * (double) render.getPartialTicks() - RenderManager.renderPosZ;
-//        double width = KillAura.currentTarget.getEntityBoundingBox().maxX - KillAura.currentTarget.getEntityBoundingBox().minX - 0.2;
-//        double height = KillAura.currentTarget.getEntityBoundingBox().maxY - KillAura.currentTarget.getEntityBoundingBox().minY + 0.05;
-//        if (KillAura.currentTarget.hurtTime > 4) {
-//            float red = 1.0f;
-//            float green = 0.0f;
-//            float blue = 0.0f;
-//            RenderUtil.drawEntityESP(x, y, z, width, height, red, green, blue, 0.3f, red, green, blue, 0.3f, 1);
-//        } else {
-//            float red = 0.0f;
-//            float green = 1.0f;
-//            float blue = 0.0f;
-//            RenderUtil.drawEntityESP(x, y, z, width, height, red, green, blue, 0.3f, red, green, blue, 0.3f, 1);
-//        }
-//    }
+    @EventHandler
+    public void onRender(EventRender3D render) { // Copy
+        if (target == null || !esp.get()) {
+            return;
+        }
+
+        if (KillAura.currentTarget == null) return;
+        double x = KillAura.currentTarget.lastTickPosX + (KillAura.currentTarget.posX - KillAura.currentTarget.lastTickPosX) * (double) render.getPartialTicks() - RenderManager.renderPosX;
+        double y = KillAura.currentTarget.lastTickPosY + (KillAura.currentTarget.posY - KillAura.currentTarget.lastTickPosY) * (double) render.getPartialTicks() - RenderManager.renderPosY;
+        double z = KillAura.currentTarget.lastTickPosZ + (KillAura.currentTarget.posZ - KillAura.currentTarget.lastTickPosZ) * (double) render.getPartialTicks() - RenderManager.renderPosZ;
+        double width = KillAura.currentTarget.getEntityBoundingBox().maxX - KillAura.currentTarget.getEntityBoundingBox().minX - 0.2;
+        double height = KillAura.currentTarget.getEntityBoundingBox().maxY - KillAura.currentTarget.getEntityBoundingBox().minY + 0.05;
+        if (KillAura.currentTarget.hurtResistantTime > 0) {
+            float red = 1.0f;
+            float green = 0.0f;
+            float blue = 0.0f;
+            RenderUtil.drawEntityESP(x, y, z, width, height, red, green, blue, 0.3f);
+        } else {
+            float red = 0.0f;
+            float green = 1.0f;
+            float blue = 0.0f;
+            RenderUtil.drawEntityESP(x, y, z, width, height, red, green, blue, 0.3f);
+        }
+    }
 
     @EventHandler
     public void onPre(EventPreUpdate event) {
@@ -233,8 +240,12 @@ public class KillAura extends Module {
                         Client.RenderRotate(rotation[0], rotation[1]);
                         break;
                     case Hypixel2:
-                        rotation[0] = (float) (RotationUtils.getAngles(target)[0] + Math.random() * amount.get() - amount.get() / 2);
-                        rotation[1] = (float) (RotationUtils.getAngles(target)[1] + Math.random() * amount.get() - amount.get() / 2);
+                        rotation[0] = (float) (RotationUtils.getAngles(target)[0] + (Math.random() * amount.get() - amount.get() / 2));
+                        rotation[1] = (float) (RotationUtils.getAngles(target)[1] + (Math.random() * amount.get() - amount.get() / 2));
+                        event.setYaw(rotation[0]);
+                        event.setPitch(rotation[1]);
+                        rotationYawHead = event.getYaw();
+                        Client.RenderRotate(rotation[0], rotation[1]);
                         break;
                     case Viro:
                         rotation = getRotations(target);
@@ -415,11 +426,31 @@ public class KillAura extends Module {
         if (!mistake) {
             EventAttack ej = new EventAttack(currentTarget, true);
             EventBus.getInstance().register(ej);
-            AttackOrder.sendFixedAttack(mc.thePlayer, currentTarget);
+
+            if (!keepSprint.get()) {
+                AttackOrder.sendFixedAttack(mc.thePlayer, currentTarget);
+            } else {
+                if (ViaMCP.getInstance().getVersion() <= ProtocolCollection.getProtocolById(47).getVersion()) {
+                    send1_8Attack(target);
+                } else {
+                    send1_9Attack(target);
+                }
+            }
+
             curBot = null;
         } else {
             mc.thePlayer.swingItem();
         }
+    }
+
+    private void send1_8Attack(Entity target) {
+        mc.thePlayer.swingItem();
+        sendPacket(new C02PacketUseEntity(target, C02PacketUseEntity.Action.ATTACK));
+    }
+
+    private void send1_9Attack(Entity target) {
+        sendPacket(new C02PacketUseEntity(target, C02PacketUseEntity.Action.ATTACK));
+        mc.thePlayer.swingItem();
     }
 
     private void getTarget(EventPreUpdate event) {
@@ -472,7 +503,6 @@ public class KillAura extends Module {
             }
             if (mc.thePlayer.getDistanceToEntity(entity) < (reach.get() + blockReach.get())) {
                 if (entity != mc.thePlayer && !mc.thePlayer.isDead && !(entity instanceof EntityArmorStand || entity instanceof EntitySnowman)) {
-
                     if (entity instanceof EntityPlayer && attackPlayers.get()) {
                         if (!mc.thePlayer.canEntityBeSeen(entity) && !throughblock.get()) return false;
 

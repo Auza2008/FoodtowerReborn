@@ -1,5 +1,17 @@
 package net.minecraft.client;
 
+import cn.foodtower.Client;
+import cn.foodtower.api.EventBus;
+import cn.foodtower.api.events.Misc.EventKey;
+import cn.foodtower.api.events.World.EventAttack;
+import cn.foodtower.api.events.World.EventTick;
+import cn.foodtower.api.events.World.EventWorldChanged;
+import cn.foodtower.ui.GuiNeedBlur;
+import cn.foodtower.ui.mainmenu.GuiMainMenu;
+import cn.foodtower.ui.notifications.user.Notifications;
+import cn.foodtower.util.ClientSetting;
+import cn.foodtower.util.render.RenderUtil;
+import cn.foodtower.util.sound.SoundFxPlayer;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -11,18 +23,6 @@ import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import me.guichaguri.betterfps.BetterFpsClient;
 import me.guichaguri.betterfps.BetterFpsConfig;
-import cn.foodtower.Client;
-import cn.foodtower.api.EventBus;
-import cn.foodtower.api.events.Misc.EventKey;
-import cn.foodtower.api.events.World.EventAttack;
-import cn.foodtower.api.events.World.EventTick;
-import cn.foodtower.api.events.World.EventWorldChanged;
-import cn.foodtower.ui.mainmenu.GuiMainMenu;
-import cn.foodtower.ui.GuiNeedBlur;
-import cn.foodtower.ui.notifications.user.Notifications;
-import cn.foodtower.util.ClientSetting;
-import cn.foodtower.util.render.RenderUtil;
-import cn.foodtower.util.sound.SoundFxPlayer;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.audio.MusicTicker;
@@ -590,7 +590,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
 
     private void createDisplay() throws LWJGLException {
         Display.setResizable(true);
-        Display.setTitle("FoodtowerFoodtower");
+        Display.setTitle("Foodtower");
 
         try {
             Display.create((new PixelFormat()).withDepthBits(24));

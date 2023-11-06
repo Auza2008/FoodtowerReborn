@@ -3,7 +3,7 @@ package cn.foodtower.ui.font;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ResourceLocation;
 
-import java.awt.Font;
+import java.awt.*;
 import java.io.InputStream;
 
 public abstract class FontLoaders {
@@ -14,7 +14,8 @@ public abstract class FontLoaders {
 	public static CFontRenderer Comfortaa12 = new CFontRenderer(FontLoaders.getComfortaa(10), true, true);
 	public static CFontRenderer Comfortaa13 = new CFontRenderer(FontLoaders.getComfortaa(13), true, true);
 	public static CFontRenderer Comfortaa14 = new CFontRenderer(FontLoaders.getComfortaa(14), true, true);
-	public static CFontRenderer Comfortaa18 = new CFontRenderer(FontLoaders.getComfortaa(18), true, true);
+    public static CFontRenderer Comfortaa16 = new CFontRenderer(FontLoaders.getComfortaa(16), true, true);
+    public static CFontRenderer Comfortaa18 = new CFontRenderer(FontLoaders.getComfortaa(18), true, true);
 	public static CFontRenderer GoogleSans14 = new CFontRenderer(FontLoaders.getGoogleSans(14), true, true);
 	public static CFontRenderer GoogleSans15 = new CFontRenderer(FontLoaders.getGoogleSans(15), true, true);
 	public static CFontRenderer GoogleSans16 = new CFontRenderer(FontLoaders.getGoogleSans(16), true, true);

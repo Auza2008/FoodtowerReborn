@@ -13,12 +13,14 @@ import cn.foodtower.manager.ModuleManager;
 import cn.foodtower.module.Module;
 import cn.foodtower.module.ModuleType;
 import cn.foodtower.module.modules.combat.KillAura;
+import cn.foodtower.module.modules.combat.VanillaAura;
 import cn.foodtower.ui.font.CFontRenderer;
 import cn.foodtower.ui.font.FontLoaders;
 import cn.foodtower.util.anim.AnimationUtil;
 import cn.foodtower.util.anim.AnimationUtils;
 import cn.foodtower.util.math.TimeUtil;
 import cn.foodtower.util.render.*;
+import cn.foodtower.util.render.gl.GLUtils;
 import cn.foodtower.util.time.MSTimer;
 import cn.foodtower.util.time.TimerUtil;
 import com.ibm.icu.text.NumberFormat;
@@ -54,8 +56,7 @@ import java.util.regex.Pattern;
 
 import static cn.foodtower.util.render.RenderUtil.drawFace;
 
-public class TargetHUD
-        extends Module {
+public class TargetHUD extends Module {
     private static final TimerUtil timerUtils = new TimerUtil();
     private static final Option black = new Option("Black", true);
     private static final Option Pvp = new Option("PVP", false);
@@ -98,6 +99,7 @@ public class TargetHUD
     MSTimer targettimer = new MSTimer();
     private double healthBarWidth;
     private double healthBarWidth2;
+    private float healthBarWidth3;
     private double introAnim;
     private float displayHealth;
     private int ticks;
@@ -220,7 +222,7 @@ public class TargetHUD
             nulltarget = false;
             target = mc.thePlayer;
         } else {
-            if (KillAura.target == null) {
+            if ((ModuleManager.getModuleByClass(KillAura.class).isEnabled() && KillAura.target == null) || (ModuleManager.getModuleByClass(VanillaAura.class).isEnabled() && VanillaAura.target == null)) {
                 if (Pvp.getValue()) {
                     if (mc.pointedEntity != null) {
                         nulltarget = false;
@@ -237,7 +239,7 @@ public class TargetHUD
                 }
             } else {
                 nulltarget = false;
-                target = KillAura.target;
+                target = KillAura.target != null ? KillAura.target : VanillaAura.target;
             }
         }
 
@@ -319,6 +321,10 @@ public class TargetHUD
                     CSB();
                     break;
                 }
+                case GodLike: {
+                    godLike();
+                    break;
+                }
                 case Vanilla: {
                     CNM();
                     break;
@@ -350,6 +356,68 @@ public class TargetHUD
             }
         }
         GlStateManager.popMatrix();
+    }
+
+    public void godLike() {
+        if (target == null) return;
+        // To draw round health math
+        double hpClamped = target.getHealth() / target.getMaxHealth();
+        hpClamped = MathHelper.clamp_double(hpClamped, 0.0, 1.0);
+        final float hpWidth = (float) (70 * hpClamped);
+        healthBarWidth = cn.foodtower.ui.gui.clikguis.utils.AnimationUtil.moveUD((float) healthBarWidth, hpWidth);
+        // To draw player health math
+        double hpClamped2 = target.getHealth() / target.getMaxHealth();
+        hpClamped2 = MathHelper.clamp_double(hpClamped2, 0.0, 1.0);
+        final double hpWidth2 = 80 * hpClamped2;
+        healthBarWidth3 = (float) DrawUtil.animateProgress(healthBarWidth3, hpWidth2, 75.f);
+        int healthAnimatedPercent = (int) (20 * (healthBarWidth3 / 80) * 5);
+
+        //color hud
+        Color healthColor = ColorUtils.getHealthColor(target.getHealth(), target.getMaxHealth());
+        //x y
+        float x = hudx.get().floatValue();
+        float y = hudY.get().floatValue() + 1;
+        float margin = 2.0f;
+        float width = 85 + margin * 2.0f;
+
+        // Draw TargetHud
+        {
+            // Background
+
+            DrawUtil.roundedRect(x + 1, y + 1, width + 23, 35f, 5, new Color(0, 0, 0, 150));
+            // Draw Face
+            float globalFontY = -2;
+            if (target instanceof EntityPlayer) {
+                StencilUtil.initStencilToWrite();
+                DrawUtil.roundedRect(x + 3, y + 3, 31, 31, 4, new Color(-1));
+                StencilUtil.readStencilBuffer(1);
+                RenderUtil.color(-1, 1);
+                renderPlayer2D(x + 3, y + 3, 31, 31, (AbstractClientPlayer) target);
+                StencilUtil.uninitStencilBuffer();
+                GlStateManager.disableBlend();
+            } else {
+                Client.FontLoaders.Chinese32.drawCenteredStringWithShadow("?", x + 18, y + 10, -1);
+            }
+
+            float globalY = -2;
+            // Health Bar ground
+            DrawUtil.roundedRect(x + 39, y + 25 - globalY, 70, 6f, 3, new Color(0, 0, 0, 100));
+            // Health Bar
+            DrawUtil.roundedRect(x + 39, y + 25 - globalY, healthBarWidth, 6f, 3, healthColor);
+            RenderUtil.startGlScissor((int) (x + 1), (int) (y + 1), (int) (width + 23), (int) 35.5f);
+            // Draw Health Value
+            Client.FontLoaders.Chinese16.drawString(healthAnimatedPercent + "% HP", x + 39, y + 18f + globalFontY, -1);
+            // Target Name
+            Client.FontLoaders.Chinese20.drawString(target instanceof EntityPlayer ? target.getName() : "Mobs", x + 38.5f, y + 6f + globalFontY, -1);
+            RenderUtil.stopGlScissor();
+        }
+    }
+
+    protected void renderPlayer2D(float x, float y, float width, float height, AbstractClientPlayer player) {
+        GLUtils.startBlend();
+        mc.getTextureManager().bindTexture(player.getLocationSkin());
+        Gui.drawScaledCustomSizeModalRect(x, y, 8.0f, 8.0f, 8, 8, width, height, 64.0F, 64.0F);
+        GLUtils.endBlend();
     }
 
     private void OMG() {
@@ -524,8 +592,7 @@ public class TargetHUD
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
         GlStateManager.popMatrix();
 
-        if (!String.valueOf(target.getHealth()).equals("NaN"))
-            health = Math.min(20, target.getHealth());
+        if (!String.valueOf(target.getHealth()).equals("NaN")) health = Math.min(20, target.getHealth());
 
         if (String.valueOf(displayHealth).equals("NaN")) {
             displayHealth = (float) (Math.random() * 20);
@@ -549,15 +616,14 @@ public class TargetHUD
         float offset = 6;
         final float drawBarPosX = posX + nameWidth;
 
-        if (displayHealth > 0.1)
-            for (int i = 0; i < displayHealth * 4; i++) {
-                int color = new Color(HUD.r.getValue().intValue(), HUD.g.getValue().intValue(), HUD.b.getValue().intValue()).getRGB();
-                final Color color1 = new Color(78, 161, 253, 100);
-                final Color color2 = new Color(78, 253, 154, 100);
-                color = ColorUtils.mixColors(color1, color2, (Math.sin(DrawUtil.ticks + posX * 0.4f + i * 0.6f / 14f) + 1) * 0.5f).hashCode();
-                Gui.drawRect(drawBarPosX + offset, y + 5, drawBarPosX + 1 + offset * 1.25, y + 10, color);
-                offset += 1;
-            }
+        if (displayHealth > 0.1) for (int i = 0; i < displayHealth * 4; i++) {
+            int color = new Color(HUD.r.getValue().intValue(), HUD.g.getValue().intValue(), HUD.b.getValue().intValue()).getRGB();
+            final Color color1 = new Color(78, 161, 253, 100);
+            final Color color2 = new Color(78, 253, 154, 100);
+            color = ColorUtils.mixColors(color1, color2, (Math.sin(DrawUtil.ticks + posX * 0.4f + i * 0.6f / 14f) + 1) * 0.5f).hashCode();
+            Gui.drawRect(drawBarPosX + offset, y + 5, drawBarPosX + 1 + offset * 1.25, y + 10, color);
+            offset += 1;
+        }
         if ((target.hurtTime == 9 && !sentParticles) || (lastTarget != null && lastTarget.hurtTime == 9 && !sentParticles)) {
             final Color color21 = new Color(190, 0, 255, 100);
             final Color color11 = new Color(0, 190, 255, 100);
@@ -839,24 +905,18 @@ public class TargetHUD
     private void CNM() {
         ScaledResolution sr = new ScaledResolution(mc);
         final FontRenderer font2 = mc.fontRendererObj;
-        if (KillAura.currentTarget != null && ModuleManager.getModuleByClass(TargetHUD.class).isEnabled()
-                & ModuleManager.getModuleByClass(KillAura.class).isEnabled()) {
+        if (KillAura.currentTarget != null && ModuleManager.getModuleByClass(TargetHUD.class).isEnabled() & ModuleManager.getModuleByClass(KillAura.class).isEnabled()) {
             final String name = KillAura.currentTarget.getName() + " ";
-            font2.drawStringWithShadow(name, (float) (ScaledResolution.getScaledWidth() / 2) - (font2.getStringWidth(name) / 2),
-                    (float) (ScaledResolution.getScaledHeight() / 2 - 30), -1);
+            font2.drawStringWithShadow(name, (float) (ScaledResolution.getScaledWidth() / 2) - (font2.getStringWidth(name) / 2), (float) (ScaledResolution.getScaledHeight() / 2 - 30), -1);
             Minecraft.getMinecraft().getTextureManager().bindTexture(new ResourceLocation("textures/gui/icons.png"));
             int i = 0;
             while ((float) i < KillAura.currentTarget.getMaxHealth() / 2.0f) {
-                Minecraft.getMinecraft().ingameGUI.drawTexturedModalRect((float) (ScaledResolution.getScaledWidth() / 2)
-                                - KillAura.currentTarget.getMaxHealth() / 2.0f * 10.0f / 2.0f + (float) (i * 10),
-                        (float) (ScaledResolution.getScaledHeight() / 2 - 16), 16, 0, 9, 9);
+                Minecraft.getMinecraft().ingameGUI.drawTexturedModalRect((float) (ScaledResolution.getScaledWidth() / 2) - KillAura.currentTarget.getMaxHealth() / 2.0f * 10.0f / 2.0f + (float) (i * 10), (float) (ScaledResolution.getScaledHeight() / 2 - 16), 16, 0, 9, 9);
                 ++i;
             }
             i = 0;
             while ((float) i < KillAura.currentTarget.getHealth() / 2.0f) {
-                Minecraft.getMinecraft().ingameGUI.drawTexturedModalRect((float) (ScaledResolution.getScaledWidth() / 2)
-                                - KillAura.currentTarget.getMaxHealth() / 2.0f * 10.0f / 2.0f + (float) (i * 10),
-                        (float) (ScaledResolution.getScaledHeight() / 2 - 16), 52, 0, 9, 9);
+                Minecraft.getMinecraft().ingameGUI.drawTexturedModalRect((float) (ScaledResolution.getScaledWidth() / 2) - KillAura.currentTarget.getMaxHealth() / 2.0f * 10.0f / 2.0f + (float) (i * 10), (float) (ScaledResolution.getScaledHeight() / 2 - 16), 52, 0, 9, 9);
                 ++i;
             }
         }
@@ -934,8 +994,7 @@ public class TargetHUD
                 GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
                 List<NetworkPlayerInfo> var5 = GuiPlayerTabOverlay.field_175252_a.sortedCopy(mc.thePlayer.sendQueue.getPlayerInfoMap());
                 for (NetworkPlayerInfo aVar5 : var5) {
-                    if (mc.theWorld.getPlayerEntityByUUID(aVar5.getGameProfile().getId()) != player)
-                        continue;
+                    if (mc.theWorld.getPlayerEntityByUUID(aVar5.getGameProfile().getId()) != player) continue;
                     float size = 30.0f;
                     mc.getTextureManager().bindTexture(aVar5.getLocationSkin());
                     RenderUtil.drawScaledCustomSizeModalRect(x + 6, y + 6, 8.0f, 8.0f, 8, 8, size, size, 64.0f, 64.0f);
@@ -1121,10 +1180,7 @@ public class TargetHUD
         float r7 = target != null ? target.getTotalArmorValue() : 0;
         if (r7 != 0) {
             if (!m.find()) {
-                RenderUtil.drawFastRoundedRect(x + 50,
-                        y + 35,
-                        (float) (x + 7 + 50 + r7 * 4.25),
-                        y + 39, 1, new Color(87, 130, 189).getRGB());
+                RenderUtil.drawFastRoundedRect(x + 50, y + 35, (float) (x + 7 + 50 + r7 * 4.25), y + 39, 1, new Color(87, 130, 189).getRGB());
             }
         }
 
@@ -1168,7 +1224,7 @@ public class TargetHUD
         ScaledResolution res = new ScaledResolution(mc);
         int x = ScaledResolution.getScaledWidth() / 2 + 30;
         int y = ScaledResolution.getScaledHeight() / 2 - 5;
-        if (KillAura.target != null) {
+        if (target != null) {
             this.FluxBackground(target);
             this.FluxonName(target);
             this.FluxonHead();
@@ -1181,19 +1237,19 @@ public class TargetHUD
             RenderUtil.drawRect(x + 20, y - 10, x + 20 + 0.6, y + 10, new Color(149, 255, 147).getRGB());
 //            RenderUtil.drawRect(x - 0.5, y - 10, x + 20 + 0.5, y - 9.5, new Color(149,255,147).getRGB());
 //            RenderUtil.drawRect(x - 0.5, y - 10, x + 20 + 0.5, y - 9.5, new Color(149,255,147).getRGB());
-            if (ModuleManager.getModuleByClass(KillAura.class).isEnabled()) {
+            if (this.isEnabled()) {
 
-                EntityLivingBase target1 = KillAura.target;
+                EntityLivingBase target1 = target;
                 if (target1 != this.lastEnt && target1 != null) {
                     this.lastEnt = target1;
                 }
                 if (startAnim) {
                     stopAnim = false;
                 }
-                if (animAlpha == 255 && KillAura.target == null) {
+                if (animAlpha == 255 && target == null) {
                     stopAnim = true;
                 }
-                startAnim = KillAura.target != null;
+                startAnim = target != null;
                 if (startAnim) {
                     if (animAlpha < 255) {
                         animAlpha += 15;
@@ -1204,7 +1260,7 @@ public class TargetHUD
                         animAlpha -= 15;
                     }
                 }
-                if (KillAura.target == null && animAlpha < 255) {
+                if (target == null && animAlpha < 255) {
                     stopAnim = true;
                 }
                 EntityLivingBase player = null;
@@ -1213,55 +1269,38 @@ public class TargetHUD
                 }
                 int c;
                 if (player != null && animAlpha >= 135) {
-                    double Width = getWidth(KillAura.target);
+                    double Width = getWidth(target);
                     if (Width < 50.0) {
                         Width = 50.0;
                     }
                     final double healthLocation;
 
 
-                    if (KillAura.target.getHealth() > 20)
-                        healthLocation = 16 + rect;
-                    else
-                        healthLocation = ((16 + rect) / 20) * (int) KillAura.target.getHealth();
+                    if (target.getHealth() > 20) healthLocation = 16 + rect;
+                    else healthLocation = ((16 + rect) / 20) * (int) target.getHealth();
 
                     anim2 = AnimationUtil.moveUD(anim2, (float) healthLocation, 18f / Minecraft.getDebugFPS(), 5f / Minecraft.getDebugFPS());
-                    int color = KillAura.target.getHealth() > 10.0f ? RenderUtil.blend(new Color(-16711936), new Color(-256), 1.0f / KillAura.target.getHealth() / 2.0f * (KillAura.target.getHealth() - 10.0f)).getRGB() : RenderUtil.blend(new Color(-256), new Color(-65536), 0.1f * KillAura.target.getHealth()).getRGB();
+                    int color = target.getHealth() > 10.0f ? RenderUtil.blend(new Color(-16711936), new Color(-256), 1.0f / target.getHealth() / 2.0f * (target.getHealth() - 10.0f)).getRGB() : RenderUtil.blend(new Color(-256), new Color(-65536), 0.1f * target.getHealth()).getRGB();
 
-                    r2 = ((16 + rect) / 20) * KillAura.target.getTotalArmorValue();
+                    r2 = ((16 + rect) / 20) * target.getTotalArmorValue();
                     //health
 
 
-                    Gui.drawRect(x + 7,
-                            y + 13,
-                            x + 23 + rect,
-                            y + 15, new Color(60, 60, 60).getRGB());
+                    Gui.drawRect(x + 7, y + 13, x + 23 + rect, y + 15, new Color(60, 60, 60).getRGB());
 
                     if (!((x + 7) == (x + 7 + anim2))) {
-                        RenderUtil.drawFastRoundedRect(x + 7,
-                                y + 13,
-                                x + 7 + anim2,
-                                y + 15, 1, new Color(255, 213, 0, 201).getRGB());
+                        RenderUtil.drawFastRoundedRect(x + 7, y + 13, x + 7 + anim2, y + 15, 1, new Color(255, 213, 0, 201).getRGB());
                     }
                     if (!((x + 7) == (x + 7 + healthLocation))) {
-                        RenderUtil.drawFastRoundedRect((float) (x + 7),
-                                (float) (y + 13),
-                                (float) (x + 7 + healthLocation),
-                                y + 15, 1, new Color(47, 190, 130).getRGB());
+                        RenderUtil.drawFastRoundedRect((float) (x + 7), (float) (y + 13), (float) (x + 7 + healthLocation), y + 15, 1, new Color(47, 190, 130).getRGB());
                     }
 
 
-                    RenderUtil.drawFastRoundedRect((float) (x + 7),
-                            (float) (y + 18),
-                            (float) (x + 23 + rect),
-                            y + 20, 1, new Color(60, 60, 60).getRGB());
+                    RenderUtil.drawFastRoundedRect((float) (x + 7), (float) (y + 18), (float) (x + 23 + rect), y + 20, 1, new Color(60, 60, 60).getRGB());
 
 
                     if (!((x + 7) == (x + 7 + r2))) {
-                        RenderUtil.drawFastRoundedRect((float) (x + 7),
-                                (float) (y + 18),
-                                (float) (x + 7 + r2),
-                                y + 20, 1, new Color(87, 130, 189).getRGB());
+                        RenderUtil.drawFastRoundedRect((float) (x + 7), (float) (y + 18), (float) (x + 7 + r2), y + 20, 1, new Color(87, 130, 189).getRGB());
                     }
 
                 }
@@ -1288,20 +1327,17 @@ public class TargetHUD
         if (FontLoaders.GoogleSans18.getStringWidth(target.getName()) < FontLoaders.GoogleSans14.getStringWidth("Health:" + f1 + ""))
             rect = FontLoaders.GoogleSans14.getStringWidth("Health:" + f1 + "");
 
-        RenderUtil.drawFastRoundedRect(x - 3,
-                y - 13,
-                (int) (x + 25 + rect) + 1,
-                y - 20 + 28 + 16, 2, new Color(40, 40, 40, 200).getRGB());
+        RenderUtil.drawFastRoundedRect(x - 3, y - 13, (int) (x + 25 + rect) + 1, y - 20 + 28 + 16, 2, new Color(40, 40, 40, 200).getRGB());
     }
 
     private void FluxonHead() {
-        if (!(KillAura.target instanceof EntityPlayer)) {
+        if (!(target instanceof EntityPlayer)) {
             return;
         }
         ScaledResolution res = new ScaledResolution(mc);
         int x = ScaledResolution.getScaledWidth() / 2 + 30;
         int y = ScaledResolution.getScaledHeight() / 2 - 5;
-        mc.getTextureManager().bindTexture(((AbstractClientPlayer) KillAura.target).getLocationSkin());
+        mc.getTextureManager().bindTexture(((AbstractClientPlayer) target).getLocationSkin());
 
         Gui.drawScaledCustomSizeModalRect(x, y - 10, 8.0F, 8.0F, 8, 8, 20, 20, 64, 64);
 
@@ -1326,7 +1362,7 @@ public class TargetHUD
         font2.drawStringWithShadowNew("", x - 20 + 50 + 2 + 2 + font2.getStringWidth("Health: " + f1 + ""), y - 25 + 20 + 6, -1);
         font2.drawStringWithShadowNew("Health:" + f1 + "", x + 20 + 2, y - 40 + font2.getStringHeight("A") + 2, -1);
 
-        font3.drawString("s", x, y - 30 + FontLoaders.GoogleSans18.getStringHeight("A") + 1, Color.getHSBColor(1f, KillAura.target.hurtTime / 10f, 0.9f).getRGB());
+        font3.drawString("s", x, y - 30 + FontLoaders.GoogleSans18.getStringHeight("A") + 1, Color.getHSBColor(1f, target.hurtTime / 10f, 0.9f).getRGB());
 
         font3.drawString("r", x, y - 30 + FontLoaders.GoogleSans18.getStringHeight("A") + 6.5f, -1);
     }
@@ -1506,27 +1542,11 @@ public class TargetHUD
     }
 
     enum AnimMode {
-        Slide,
-        Scale
+        Slide, Scale
     }
 
     enum Modes {
-        Distance,
-        Astolfo,
-        Novoline,
-        NewPowerX,
-        OldPowerX,
-        Flux,
-        Lune,
-        Other,
-        Exhibition,
-        OldExhibition,
-        Rosalba,
-        Remix,
-        Classic,
-        Rise,
-        Vanilla,
-        Simple
+        Distance, Astolfo, Novoline, NewPowerX, OldPowerX, Flux, Lune, Other, Exhibition, OldExhibition, Rosalba, Remix, Classic, GodLike, Rise, Vanilla, Simple
     }
 }
 

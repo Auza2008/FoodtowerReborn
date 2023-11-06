@@ -7,6 +7,7 @@ import cn.foodtower.api.events.Misc.EventChat;
 import cn.foodtower.api.events.Render.EventRender3D;
 import cn.foodtower.api.events.World.EventPostUpdate;
 import cn.foodtower.api.events.World.EventPreUpdate;
+import cn.foodtower.api.events.World.EventWorldChanged;
 import cn.foodtower.api.value.Numbers;
 import cn.foodtower.api.value.Option;
 import cn.foodtower.module.Module;
@@ -151,6 +152,11 @@ public class BedNuker extends Module {
     public void onEnable() {
         selfBed = null;
         new Thread(BedNuker::updateCloestBlockPos, "BedNuker-Marker").start();
+    }
+
+    @EventHandler
+    private void onWorld(EventWorldChanged e) {
+        selfBed = null;
     }
 
     @EventHandler

@@ -1,8 +1,14 @@
 package cn.foodtower.manager;
 
-import cn.foodtower.Client;
 import cn.foodtower.api.EventBus;
 import cn.foodtower.api.EventHandler;
+import cn.foodtower.api.events.Misc.EventKey;
+import cn.foodtower.api.events.Render.EventRender2D;
+import cn.foodtower.api.events.Render.EventRender3D;
+import cn.foodtower.api.value.Mode;
+import cn.foodtower.api.value.Numbers;
+import cn.foodtower.api.value.Option;
+import cn.foodtower.api.value.Value;
 import cn.foodtower.module.Module;
 import cn.foodtower.module.ModuleType;
 import cn.foodtower.module.modules.combat.*;
@@ -11,13 +17,6 @@ import cn.foodtower.module.modules.player.*;
 import cn.foodtower.module.modules.render.*;
 import cn.foodtower.module.modules.world.*;
 import cn.foodtower.util.ClientSetting;
-import cn.foodtower.api.events.Misc.EventKey;
-import cn.foodtower.api.events.Render.EventRender2D;
-import cn.foodtower.api.events.Render.EventRender3D;
-import cn.foodtower.api.value.Mode;
-import cn.foodtower.api.value.Numbers;
-import cn.foodtower.api.value.Option;
-import cn.foodtower.api.value.Value;
 import cn.foodtower.util.render.gl.GLUtils;
 import me.guichaguri.betterfps.BetterFpsConfig;
 import net.minecraft.client.renderer.GlStateManager;
@@ -54,7 +53,8 @@ public class ModuleManager implements Manager {
 		modules.add(new TPAura());
 		modules.add(new Reach());
 		modules.add(new Regen());
-		modules.add(new SuperKnockback());
+        modules.add(new SuperKnockback());
+        modules.add(new VanillaAura());
 
 		// Render
 		modules.add(new Health());

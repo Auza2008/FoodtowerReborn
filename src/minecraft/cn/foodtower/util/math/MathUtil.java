@@ -196,5 +196,6 @@ public class MathUtil {
 
 		return vector;
 	}
-	public static int randomNumber(int max, int min) { return -min + (int)(Math.random() * (max - -min + 1)); }
+
+    public static int randomNumber(int max, int min) { return -min + (int)(Math.random() * (max - -min + 1)); }
 }

@@ -22,9 +22,9 @@ public class FontLoader {
     public static FastUniFontRenderer msFont22 = getFont(22,"HarmonyOS_Sans_SC_Regular.ttf",32);
     public static FastUniFontRenderer msFont23 = getFont(23,"HarmonyOS_Sans_SC_Regular.ttf",33);
     public static FastUniFontRenderer msFont24 = getFont(24,"HarmonyOS_Sans_SC_Regular.ttf",35);
-    public static FastUniFontRenderer msFont25 = getFont(25,"HarmonyOS_Sans_SC_Regular.ttf",37);
-
-    public static FastUniFontRenderer msFont35 = getFont(35,"HarmonyOS_Sans_SC_Regular.ttf",38);
+    public static FastUniFontRenderer msFont25 = getFont(25, "HarmonyOS_Sans_SC_Regular.ttf", 37);
+    public static FastUniFontRenderer msFont32 = getFont(32, "HarmonyOS_Sans_SC_Regular.ttf");
+    public static FastUniFontRenderer msFont35 = getFont(35, "HarmonyOS_Sans_SC_Regular.ttf", 38);
     public static FastUniFontRenderer msFont36 = getFont(36,"HarmonyOS_Sans_SC_Regular.ttf",40);
     public static FastUniFontRenderer msFont72 = getFont(72,"HarmonyOS_Sans_SC_Regular.ttf",41);
 

@@ -7,6 +7,7 @@ import cn.foodtower.module.ModuleType;
 import cn.foodtower.ui.gui.clikguis.ClickUi.ClickUi;
 import cn.foodtower.ui.gui.clikguis.clickgui3.ClientClickGui;
 import cn.foodtower.ui.gui.clikguis.exhibition.Clickgui;
+import cn.foodtower.ui.gui.clikguis.powerx.PXClickGui;
 import cn.foodtower.util.sound.SoundFxPlayer;
 
 public class ClickGui extends Module {
@@ -27,6 +28,10 @@ public class ClickGui extends Module {
                 mc.displayGuiScreen(new Clickgui());
                 break;
             }
+            case PowerX: {
+                mc.displayGuiScreen(new PXClickGui());
+                break;
+            }
             case Nov: {
                 mc.displayGuiScreen(new ClickUi());
                 break;
@@ -45,6 +50,7 @@ public class ClickGui extends Module {
 
     enum modes {
         Exhibition,
+        PowerX,
         Nov,
         Distance,
         Azlips
